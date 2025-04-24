@@ -1,0 +1,17 @@
+.topbar {
+  background-color: black;
+  color: white;
+  margin: 10px 0px;
+  padding: 8px;
+}
+
+.scroll {
+  white-space: nowrap;
+  overflow: hidden;
+  animation: scroll-left 10s linear infinite;
+}
+
+@keyframes scroll-left {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}

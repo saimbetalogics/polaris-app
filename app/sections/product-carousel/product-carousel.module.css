@@ -1,0 +1,21 @@
+.product_carousel {
+  width: 100%;
+  display: flex;
+  align-items: start;
+  padding: 0px 4px;
+  background-color: white;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.embla {
+  overflow: hidden;
+}
+
+.embla__container {
+  display: flex;
+}
+
+.embla__slide {
+  min-width: 0;
+}

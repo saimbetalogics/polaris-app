@@ -1,0 +1,38 @@
+
+.embla {
+  overflow: hidden;
+  background: white;
+  border-radius: 5px;
+  padding: 8px 4px;
+}
+
+.embla__container {
+  display: flex;
+}
+
+.embla__slide {
+  flex: 0 0 calc(25% - 8px); 
+  margin-right: 8px; 
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+}
+
+.imageWrapper {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.embla__slide p {
+  font-size: 10px;
+}

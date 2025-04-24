@@ -1,0 +1,27 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "e4344f53d22a0e90db6c2311ba13b21c"
+name = "builder"
+handle = "builder-46"
+application_url = "https://mario-ds-forbes-clock.trycloudflare.com"
+embedded = true
+
+[webhooks]
+api_version = "2025-04"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products"
+
+[auth]
+redirect_urls = [
+  "https://mario-ds-forbes-clock.trycloudflare.com/auth/callback",
+  "https://mario-ds-forbes-clock.trycloudflare.com/auth/shopify/callback",
+  "https://mario-ds-forbes-clock.trycloudflare.com/api/auth/callback"
+]
+
+[pos]
+embedded = false
+
+[build]
+automatically_update_urls_on_dev = true

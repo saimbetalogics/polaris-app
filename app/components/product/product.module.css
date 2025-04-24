@@ -1,0 +1,13 @@
+/* .product { */
+  /* width: 120px; */
+/* } */
+
+.product div {
+  width: 100%;
+  border-radius: 8px;
+}
+
+.product_img {
+  width: 100%;
+  border-radius: 8px;
+}
