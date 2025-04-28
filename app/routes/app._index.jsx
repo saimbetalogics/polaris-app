@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Page,
   Layout,
@@ -33,7 +33,7 @@ export const loader = async ({ request }) => {
     .filter(section => section.type === 'product_carousel')
     .map(section => ({ collection_id: `gid://shopify/Collection/${section.collection_id}` }))
 
-  const collections = await Promise.all(collectionIds.map(async ({ collection_id }) => {
+  const collectionsWithProducts = await Promise.all(collectionIds.map(async ({ collection_id }) => {
     const res = await admin.graphql(
       `#graphql
       query getCollectionProducts($id: ID!) {
@@ -81,129 +81,99 @@ export const loader = async ({ request }) => {
     };
   }))
 
-  return collections
+  const getAllCollections = await admin.graphql(
+    `#graphql
+    query getAllCollections {
+      collections(first: 20) {
+        edges {
+          node {
+            id
+            title
+            image {
+              url
+              altText
+            }
+          }
+        }
+      }
+    }
+    `
+  );
+
+  const allCollectionJson = await getAllCollections.json()
+  const allCollections = allCollectionJson.data.collections.edges.map(edge => edge.node)
+
+  return { collectionsWithProducts, allCollections }
 };
 
-export default function Index() {
-  const collections = useLoaderData();
+const MemoizedModal = React.memo(Modal)
+const MemoizedMobileView = React.memo(MobileView)
+const MemoizedTextarea = React.memo(Textarea)
 
-  const [data, setData] = useState('');
+export default function Index() {
+  const {collectionsWithProducts, allCollections} = useLoaderData();
+
   const [parsedData, setParsedData] = useState({});
+  const [data, setData] = useState('');
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedEl, setSelectedEl] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  async function fetchData() {
+  const fetchData = useCallback(async () => {
     try {
       const response = await fetch('http://localhost:5000/api/data');
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch data');
-      }
+      if (!response.ok) throw new Error('Failed to fetch data');
 
       const jsonData = await response.json();
-      const freshData = JSON.stringify(jsonData, null, 2);
 
-      const container = document.querySelector('.mobile_view');
-      if (container) {
-        container.innerHTML = '';
-      }
-
-      setData(freshData);
+      setData(JSON.stringify(jsonData, null, 2))
+      setParsedData(jsonData)
     } catch (error) {
       console.error('Failed to fetch data:', error);
     }
-  }
+  }, [])
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   useEffect(() => {
-    try {
-      const parsed = JSON.parse(data);
-      setParsedData(parsed);
-    } catch (err) {
-      console.error('Error parsing JSON:', err);
-    }
+    let timeout = setTimeout(() => {
+      try {
+        const parsed = JSON.parse(data);
+        setParsedData(parsed);
+      } catch (err) {
+        console.error('Error parsing JSON:', err.message);
+      }
+    }, 300); 
+  
+    return () => clearTimeout(timeout);
   }, [data]);
 
-  async function handleUpdate() {
-    const outputData = { home_page: [] };
-
-    document.querySelectorAll('.main').forEach((mainEl) => {
-      const itemData = getAttributes(mainEl);
-      const imagesData = [];
-
-      mainEl.querySelectorAll('.item').forEach((itemEl) => {
-        const imageData = getAttributes(itemEl);
-        imagesData.push(imageData);
-      });
-
-      if (imagesData.length) {
-        itemData.images = imagesData;
-      }
-
-      outputData.home_page.push(itemData);
-    });
-
+  const handleUpdate = useCallback(async () => {
     try {
       setLoading(true);
 
-      const currentData = typeof data === 'string' ? JSON.parse(data) : data;
-      const newData = {
-        ...currentData,
-        home_page: outputData.home_page,
-      };
-
       const response = await fetch('http://localhost:5000/api/data/update', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ home_page: newData.home_page }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ home_page: parsedData.home_page }),
       });
+      if (!response.ok) throw new Error('Failed to update home page');
 
-      if (!response.ok) {
-        throw new Error('Failed to update home page');
-      }
-
-      await response.json()
-
+      await response.json();
       window.location.reload();
     } catch (err) {
-      console.error('Failed to update home page:', err);
+      console.error(err.message);
     } finally {
       setLoading(false);
     }
-  }
+  }, [parsedData]);
 
-  function getAttributes(element) {
-    const data = {};
-    Array.from(element.attributes).forEach((attr) => {
-      if (attr.name.startsWith('data-')) {
-        let key = attr.name.replace('data-', '');
-        let value = attr.value || '';
-
-        if (key === 'background-color') {
-          value = value.includes(',') ? value.split(',').map((c) => c.trim()) : [value];
-        } else if (key === 'font-size') {
-          value = Number(value);
-        }
-
-        if (key !== 'slick-index') {
-          data[key] = value;
-        }
-      }
-    });
-
-    return data;
-  }
-
-  const handleSelect = (item, itemEl, mainEl) => {
+  const handleSelect = useCallback((item, itemEl, mainEl) => {
     setSelectedItem(item);
     setSelectedEl(itemEl || mainEl);
-  };
+  }, []);
 
   return (
     <Page fullWidth>
@@ -224,28 +194,29 @@ export default function Index() {
                   {loading ? <Spinner size="small" /> : 'Update'}
                 </Button>
               </InlineStack>
-              <Textarea data={data} setData={setData} />
+              <MemoizedTextarea data={data} setData={setData} />
             </BlockStack>
           </Layout.Section>
 
           {/* Modal Section */}
           <Layout.Section variant="oneThird">
-            <Modal
+            <MemoizedModal
               item={selectedItem}
               itemEl={selectedEl}
               onClick={handleSelect}
               location_list={parsedData?.location_list}
               setParsedData={setParsedData}
               setSelectedItem={setSelectedItem}
+              allCollections={allCollections}
             />
           </Layout.Section>
 
           {/* Mobile Preview Section */}
           <Layout.Section variant="oneThird">
-            <MobileView
+            <MemoizedMobileView
               data={parsedData}
               onSelect={handleSelect}
-              collections={collections}
+              collections={collectionsWithProducts}
             />
           </Layout.Section>
         </Layout>
