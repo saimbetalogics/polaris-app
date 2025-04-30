@@ -1,0 +1,77 @@
+.grid {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.dropZoneBox {
+  max-width: 200px;
+  width: 100%;
+  aspect-ratio: 1;
+  margin: auto;
+}
+
+.dropZoneBox:hover {
+  background: var(--p-color-bg-surface-secondary-hover);
+}
+
+.mediaItem {
+  max-width: 200px;
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px solid rgba(204, 204, 204, 1);
+  position: relative;
+  display: flex;
+  border-radius: var(--p-border-radius-200);
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.mediaOverlay {
+  background-color: #00000080;
+  opacity: 0;
+  transition: opacity var(--p-motion-duration-150);
+}
+
+@media (hover: hover) {
+  .mediaOverlay {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    border-radius: var(--p-border-radius-200);
+  }
+
+  .mediaOverlay:hover {
+    opacity: 1;
+  }
+}
+
+@media (hover: none) {
+  .mediaOverlay {
+    opacity: 1;
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+}
+
+.deleteButton {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  cursor: pointer;
+}
+
+.image {
+  object-fit: cover;
+  border-radius: var(--p-border-radius-200);
+  aspect-ratio: 1;
+}
