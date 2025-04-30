@@ -103,7 +103,37 @@ export const loader = async ({ request }) => {
   const allCollectionJson = await getAllCollections.json()
   const allCollections = allCollectionJson.data.collections.edges.map(edge => edge.node)
 
-  return { collectionsWithProducts, allCollections }
+  const getAllProducts = await admin.graphql(
+    `#graphql
+    query getAllProducts {
+      products(first:20) {
+        edges {
+          node {
+            id
+            title
+            media(first:1) {
+              edges {
+                node {
+                  preview {
+                    image {
+                      url
+                      altText
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    `
+  )
+
+  const allProductJson = await getAllProducts.json();
+  const allProducts = allProductJson.data.products.edges.map(edge => edge.node); 
+  
+  return { collectionsWithProducts, allCollections, allProducts }
 };
 
 const MemoizedModal = React.memo(Modal)
@@ -111,12 +141,12 @@ const MemoizedMobileView = React.memo(MobileView)
 const MemoizedTextarea = React.memo(Textarea)
 
 export default function Index() {
-  const {collectionsWithProducts, allCollections} = useLoaderData();
+  const { collectionsWithProducts, allCollections, allProducts } = useLoaderData();
 
   const [parsedData, setParsedData] = useState({});
   const [data, setData] = useState('');
   const [selectedItem, setSelectedItem] = useState(null);
-  const [selectedEl, setSelectedEl] = useState(null);
+  const [selectedElement, setSelectedElement] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const fetchData = useCallback(async () => {
@@ -145,8 +175,8 @@ export default function Index() {
       } catch (err) {
         console.error('Error parsing JSON:', err.message);
       }
-    }, 300); 
-  
+    }, 300);
+
     return () => clearTimeout(timeout);
   }, [data]);
 
@@ -172,7 +202,7 @@ export default function Index() {
 
   const handleSelect = useCallback((item, itemEl, mainEl) => {
     setSelectedItem(item);
-    setSelectedEl(itemEl || mainEl);
+    setSelectedElement(itemEl || mainEl);
   }, []);
 
   return (
@@ -201,13 +231,13 @@ export default function Index() {
           {/* Modal Section */}
           <Layout.Section variant="oneThird">
             <MemoizedModal
-              item={selectedItem}
-              itemEl={selectedEl}
-              onClick={handleSelect}
-              location_list={parsedData?.location_list}
+              selectedItem={selectedItem}
+              selectedElement={selectedElement}
+              onItemSelect={handleSelect}
+              availableLocations={parsedData?.location_list}
               setParsedData={setParsedData}
-              setSelectedItem={setSelectedItem}
-              allCollections={allCollections}
+              availableCollections={allCollections}
+              availableProducts={allProducts}
             />
           </Layout.Section>
 
